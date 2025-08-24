@@ -1,0 +1,125 @@
+/* Floating animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(var(--rotate)); }
+  50% { transform: translateY(-8px) rotate(var(--rotate)); }
+}
+
+/* Title floating */
+h1 {
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  color: #2dc4ff;
+  text-shadow: 3px 3px #ccc;
+  margin: 20px 0;
+  animation: float 4s ease-in-out infinite;
+  --rotate: 0deg;
+}
+
+/* Doodles */
+.doodle {
+  position: absolute;
+  pointer-events: none;
+  animation: float 5s ease-in-out infinite;
+}
+
+/* Paper airplane top left */
+.doodle-top-left {
+  top: 5%;
+  left: 6%;
+  width: clamp(70px, 10vw, 140px);
+  --rotate: -10deg;
+}
+
+/* Alien top right */
+.doodle-top-right {
+  top: 5%;
+  right: 6%;
+  width: clamp(80px, 12vw, 160px);
+  --rotate: 8deg;
+  animation-delay: 0.5s; /* Slight offset */
+}
+
+/* XO bottom left */
+.doodle-bottom-left {
+  bottom: 7%;
+  left: 7%;
+  width: clamp(65px, 10vw, 140px);
+  --rotate: -5deg;
+  animation-delay: 1s;
+}
+
+/* Responsive adjustments for notebook line margin */
+@media (max-width: 600px) {
+  .notebook::before {
+    left: 40px;
+  }
+}
+
+.normal-mode-section {
+  padding: 80px 20px;
+  background-color: #fff9f0;
+  font-family: 'Fredoka', sans-serif;
+  display: flex;
+  justify-content: center;
+}
+
+.normal-mode-container {
+  max-width: 1000px;
+  width: 100%;
+  border: 3px dotted #444;
+  background: #fff;
+  padding: 40px;
+  border-radius: 15px;
+  text-align: center;
+}
+
+.mode-title {
+  font-size: 2.5rem;
+  margin-bottom: 40px;
+  color: #333;
+}
+
+.mode-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+  justify-content: center;
+}
+
+.mode-card {
+  background-color: #fefefe;
+  border: 2px solid #ddd;
+  border-radius: 15px;
+  padding: 20px;
+  width: 250px;
+  text-decoration: none;
+  color: #333;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mode-card img {
+  max-width: 100%;
+  height: auto;
+  margin-bottom: 15px;
+}
+
+.mode-card h3 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+
+.mode-card p {
+  font-size: 1rem;
+  color: #555;
+}
+
+.mode-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0px 5px 15px rgba(0,0,0,0.1);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .mode-card {
+    width: 100%;
+  }
+}

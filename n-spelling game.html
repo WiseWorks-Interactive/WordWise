@@ -1,0 +1,336 @@
+okay okay.. heres a code for the spelling game, now use that to remake story game.
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>WordWise - Spelling Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blue:#2dc4ff;
+  --yellow:#fff59d;
+  --ink:#00aaff;
+  --dash:#2dc4ff;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  font-family:'Fredoka',sans-serif;
+  background: repeating-linear-gradient(#fff,#fff 23px,var(--ink) 24px);
+  overflow-x:hidden;
+}
+body::before{
+  content:"";
+  position:fixed;
+  top:0;left:60px;width:2px;height:100%;
+  background:#ffe873;
+  z-index:0;
+}
+header{
+  background:var(--blue);
+  color:#fff;
+  padding:15px 20px;
+  position:fixed;left:0;right:0;top:0;
+  z-index:2000;
+  display:flex;align-items:center;justify-content:center;
+}
+header h2{margin:0;font-weight:700;font-size:2rem;}
+.section{
+  min-height:100vh;
+  padding:6rem 1rem 2rem;
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+}
+.game-title{
+  color:var(--blue);
+  font-size:clamp(1.6rem,4.5vw,2.4rem);
+  text-shadow:2px 3px #c9c9c9;margin:0 0 .6rem;
+}
+.game-panel{
+  background:#fff;border:3px dashed var(--dash);border-radius:22px;
+  width:min(1000px,92vw);padding:1rem 1rem 1.2rem;margin:10px auto;box-shadow:4px 6px #c9c9c9;
+  text-align:left;
+}
+.subtle{color:#154f66;}
+.spelling-word{
+  font-size:clamp(1.8rem,6vw,2.6rem);font-weight:700;color:#117fb3;text-align:center;margin:.2rem 0 .6rem;
+  letter-spacing:.04em;
+}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center;margin:.6rem 0}
+.chip{
+  background:#f1fbff;border:2px dashed var(--dash);border-radius:16px;padding:.35rem .6rem;cursor:pointer;
+  font-weight:700;min-width:2.2rem;text-align:center;
+}
+.chip:hover{filter:brightness(0.97)}
+.canvas-wrap{
+  display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-start;justify-content:center;margin-top:.6rem;
+}
+canvas{
+  background:#fff;border:3px dashed var(--dash);border-radius:18px;box-shadow:4px 6px #c9c9c9;
+  touch-action:none;
+}
+.hint{font-size:.9rem;color:#395b6a;margin-top:.25rem}
+.btn-container{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;margin-top:.5rem}
+button{
+  background:var(--yellow);
+  border:none;border-radius:30px;
+  padding:12px 26px;
+  font-weight:700;font-size:1.1rem;color:var(--blue);cursor:pointer;
+}
+button:hover{filter:brightness(1.05)}
+/* Score bounce animation */
+@keyframes bounce {
+  0% {transform: translate(-50%, -1.2rem) scale(1);}
+  30% {transform: translate(-50%, -2.5rem) scale(1.4);}
+  60% {transform: translate(-50%, -2rem) scale(1.2);}
+  100% {transform: translate(-50%, -1.2rem) scale(1);}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h2>WORDWISE – Normal Mode Spelling</h2>
+</header>
+
+<section id="spelling-game" class="section">
+  <h2 class="game-title">Spelling Game</h2>
+  
+ <div id="scoreDisplay" style="font-size:1.2rem; margin-bottom:0.8rem; color:var(--blue); position:relative;">
+  Score: <span id="score">0</span> pts
+  <div id="scoreAnim" style="position:absolute; left:50%; top:-1.2rem; font-weight:bold; color:#2dc4ff; opacity:0;">+10</div>
+</div>
+
+<div style="width:100%; text-align:center; margin:0.5rem 0 1rem;">
+  <a href="normal.html">
+    <button style="padding:8px 14px; font-size:1rem;">← Back to Normal Mode</button>
+  </a>
+</div>
+
+  <div class="game-panel">
+    <p class="subtle" style="margin:.2rem 0 .4rem">
+      One letter is missing. Draw the letter on the whiteboard (or tap a chip).
+    </p>
+    <div id="spellingWord" class="spelling-word">_ _ _</div>
+    <div class="chips" id="letterChips"></div>
+
+    <div class="canvas-wrap">
+      <div>
+        <canvas id="board" width="320" height="200"></canvas>
+        <div class="btn-container">
+          <button onclick="clearBoard()">Clear</button>
+          <button onclick="undoStroke()">Undo</button>
+          <button onclick="manualRecognize()">Recognize Drawing</button>
+        </div>
+        <div class="hint">Tip: write in uppercase and roughly centered for best results.</div>
+      </div>
+
+      <div style="max-width:180px; display:flex; flex-direction:column; justify-content:flex-start;">
+        <div class="dash-panel" style="margin:0; padding:1rem;">
+          <p class="subtle" style="margin:.2rem 0; font-size:1rem;">
+            Your guess: <strong id="chosenLetter" style="font-size:1.5rem;">?</strong> 
+            <span id="conf" class="subtle" style="font-size:0.9rem;"></span>
+          </p>
+          <div class="btn-container" style="flex-direction:column; gap:0.4rem;">
+            <button onclick="checkSpelling()">Check Answer</button>
+            <button onclick="nextSpelling()">Next Word</button>
+          </div>
+          <p id="spellingResult" class="subtle" style="margin:.4rem 0 0"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+// ===== USER SCORE =====
+let user = localStorage.getItem("loggedInUser");
+if(!user){
+  alert("Please login first!");
+  window.location.href = "login.html";
+}
+
+// Load previous score
+let score = parseInt(localStorage.getItem(`score_${user}_normal`) || "0", 10);
+document.getElementById('score').textContent = score;
+
+// Update score display and localStorage
+function updateScore(points){
+  score += points;
+  document.getElementById('score').textContent = score;
+  localStorage.setItem(`score_${user}_normal`, score); // persist score
+  showScoreAnimation();
+}
+
+// Score animation
+function showScoreAnimation(){
+  const anim = document.getElementById('scoreAnim');
+  anim.style.opacity = '1';
+  anim.style.animation = 'bounce 0.6s forwards';
+  setTimeout(()=>anim.style.opacity='0', 600);
+  launchConfetti();
+}
+
+// Confetti effect
+function launchConfetti(){
+  const duration = 1.5 * 1000;
+  const end = Date.now() + duration;
+  (function frame(){
+    const colors=['#ff0','#0ff','#f0f','#f90','#0f0','#00f'];
+    const conf = document.createElement('div');
+    conf.style.position='fixed';
+    conf.style.zIndex='9999';
+    conf.style.width='8px';
+    conf.style.height='8px';
+    conf.style.background = colors[Math.floor(Math.random()*colors.length)];
+    conf.style.left = (Math.random()*window.innerWidth)+'px';
+    conf.style.top = '0px';
+    conf.style.borderRadius='50%';
+    document.body.appendChild(conf);
+    const fall = setInterval(()=>{
+      let top = parseFloat(conf.style.top);
+      if(top<window.innerHeight){
+        conf.style.top = (top + Math.random()*8 +2)+'px';
+      }else{
+        conf.remove(); clearInterval(fall);
+      }
+    }, 16);
+    if(Date.now() < end) requestAnimationFrame(frame);
+  })();
+}
+
+// ===== SPELLING GAME =====
+const SPELLING_WORDS = ['planet','pencil','window','library','garden','tunnel','rocket','bridge','candle','puzzle','silver','button','cotton','kettle','basket','dragon','forest','puppy','holiday','pocket','matter','yellow','monkey','camera','ticket','anchor'];
+let spWord='', spMissingIndex=-1, spAnswer='';
+
+function nextSpelling(){
+  const w = SPELLING_WORDS[Math.floor(Math.random()*SPELLING_WORDS.length)];
+  spMissingIndex = Math.floor(Math.random()*w.length);
+  spAnswer = w[spMissingIndex];
+  spWord = w.slice(0,spMissingIndex)+'_'+w.slice(spMissingIndex+1);
+  document.getElementById('spellingWord').textContent = spWord.split('').join(' ');
+  document.getElementById('chosenLetter').textContent='?';
+  document.getElementById('conf').textContent='';
+  document.getElementById('spellingResult').textContent='';
+  buildLetterChips();
+  clearBoard(true);
+}
+
+function buildLetterChips(){
+  const wrap=document.getElementById('letterChips');
+  wrap.innerHTML='';
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(ch=>{
+    const b=document.createElement('button');
+    b.className='chip';
+    b.textContent=ch;
+    b.onclick=()=>setGuess(ch);
+    wrap.appendChild(b);
+  });
+}
+
+function setGuess(ch, conf=undefined){
+  document.getElementById('chosenLetter').textContent=ch.toLowerCase();
+  document.getElementById('conf').textContent = (conf!=null)? ` (conf: ${(conf*100|0)}%)` : '';
+}
+
+function checkSpelling(){
+  const guess = document.getElementById('chosenLetter').textContent;
+  if(guess==='?'){
+    const r = recognizeDrawing();
+    if(r){ setGuess(r.letter, r.score); } 
+    else { 
+      document.getElementById('spellingResult').textContent='Draw the letter or tap a chip 🙂'; 
+      return; 
+    }
+  }
+
+  if(guess.toLowerCase() === spAnswer.toLowerCase()){
+    document.getElementById('spellingResult').textContent='✅ Correct! ' + spWord.replace('_', spAnswer);
+    updateScore(10);
+  } else {
+    document.getElementById('spellingResult').textContent=`❌ Not quite. The answer was "${spAnswer}".`;
+  }
+
+  setTimeout(() => nextSpelling(), 1200);
+}
+
+// ===== WHITEBOARD =====
+const board=document.getElementById('board'), ctx=board.getContext('2d');
+let drawing=false, strokes=[], currentStroke=[];
+
+function getPos(e){const r=board.getBoundingClientRect(); return e.touches?{x:e.touches[0].clientX-r.left,y:e.touches[0].clientY-r.top}:{x:e.clientX-r.left,y:e.clientY-r.top};}
+function startDraw(e){drawing=true;currentStroke=[];currentStroke.push(getPos(e)); drawDot(getPos(e)); e.preventDefault();}
+function moveDraw(e){if(!drawing) return; const p=getPos(e); const last=currentStroke[currentStroke.length-1]; ctx.lineWidth=8; ctx.lineCap='round'; ctx.strokeStyle='#0aa1d8'; ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke(); currentStroke.push(p); e.preventDefault();}
+function endDraw(){if(drawing){drawing=false; strokes.push(currentStroke.slice()); const r=recognizeDrawing(); if(r) setGuess(r.letter,r.score);}}
+function drawDot(p){ctx.fillStyle='#0aa1d8'; ctx.beginPath(); ctx.arc(p.x,p.y,3,0,Math.PI*2); ctx.fill();}
+function clearBoard(skip){ctx.clearRect(0,0,board.width,board.height); if(!skip) strokes=[];}
+function undoStroke(){strokes.pop(); ctx.clearRect(0,0,board.width,board.height); ctx.lineWidth=8; ctx.lineCap='round'; ctx.strokeStyle='#0aa1d8'; strokes.forEach(st=>{for(let i=1;i<st.length;i++){ctx.beginPath();ctx.moveTo(st[i-1].x,st[i-1].y);ctx.lineTo(st[i].x,st[i].y);ctx.stroke();}});}
+board.addEventListener('mousedown',startDraw);
+board.addEventListener('mousemove',moveDraw);
+window.addEventListener('mouseup',endDraw);
+board.addEventListener('touchstart',startDraw,{passive:false});
+board.addEventListener('touchmove',moveDraw,{passive:false});
+board.addEventListener('touchend',endDraw);
+
+function manualRecognize(){const r=recognizeDrawing(); if(r) setGuess(r.letter,r.score); else document.getElementById('conf').textContent='';}
+
+// ===== LIGHTWEIGHT RECOGNITION =====
+const TEMPLATES={};
+function buildTemplates(){
+  const c=document.createElement('canvas'), tctx=c.getContext('2d'); c.width=320;c.height=200;
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(L=>{
+    tctx.clearRect(0,0,c.width,c.height);
+    tctx.fillStyle='#fff'; tctx.fillRect(0,0,c.width,c.height);
+    tctx.fillStyle='#000'; tctx.font='bold 180px Fredoka, Arial Black, Arial, sans-serif';
+    tctx.textAlign='center'; tctx.textBaseline='middle';
+    tctx.fillText(L,c.width/2,c.height/2+10);
+    TEMPLATES[L]=preprocessTo28x28(c);
+  });
+}
+
+function recognizeDrawing(){
+  if(strokes.length===0) return null;
+  const c=document.createElement('canvas'), tctx=c.getContext('2d');
+  c.width=board.width;c.height=board.height;
+  tctx.fillStyle='#fff'; tctx.fillRect(0,0,c.width,c.height);
+  tctx.lineWidth=18; tctx.lineCap='round'; tctx.strokeStyle='#000';
+  strokes.forEach(st=>{for(let i=1;i<st.length;i++){tctx.beginPath();tctx.moveTo(st[i-1].x,st[i-1].y);tctx.lineTo(st[i].x,st[i].y);tctx.stroke();}});
+  const vec=preprocessTo28x28(c); if(!vec) return null;
+  let bestLetter=null, bestScore=-1;
+  const n=Math.sqrt(vec.reduce((s,v)=>s+v*v,0))+1e-6;
+  for(const L in TEMPLATES){
+    const tv=TEMPLATES[L]; let dot=0;
+    for(let i=0;i<784;i++){dot+=vec[i]*tv[i];}
+    const tn=Math.sqrt(tv.reduce((s,v)=>s+v*v,0))+1e-6;
+    const score=dot/(n*tn); if(score>bestScore){bestScore=score; bestLetter=L;}
+  }
+  return {letter:bestLetter, score:bestScore};
+}
+
+function preprocessTo28x28(sourceCanvas){
+  const w=sourceCanvas.width,h=sourceCanvas.height,sctx=sourceCanvas.getContext('2d');
+  const img=sctx.getImageData(0,0,w,h).data;
+  let minX=w,minY=h,maxX=-1,maxY=-1,hasInk=false;
+  for(let y=0;y<h;y++){for(let x=0;x<w;x++){const i=(y*w+x)*4; const lum=0.299*img[i]+0.587*img[i+1]+0.114*img[i+2]; if(lum<240){hasInk=true; if(x<minX)minX=x; if(y<minY)minY=y; if(x>maxX)maxX=x; if(y>maxY)maxY=y;}}}
+  if(!hasInk) return null;
+  minX=Math.max(0,minX-4); minY=Math.max(0,minY-4); maxX=Math.min(w-1,maxX+4); maxY=Math.min(h-1,maxY+4);
+  const bw=maxX-minX+1,bh=maxY-minY+1;
+  const sq=document.createElement('canvas'); sq.width=200; sq.height=200; const qctx=sq.getContext('2d');
+  qctx.fillStyle='#fff'; qctx.fillRect(0,0,200,200);
+  const scale=Math.min(180/bw,180/bh), dw=Math.round(bw*scale), dh=Math.round(bh*scale), dx=Math.round(100-dw/2), dy=Math.round(100-dh/2);
+  qctx.imageSmoothingEnabled=true; qctx.drawImage(sourceCanvas,minX,minY,bw,bh,dx,dy,dw,dh);
+  const out=document.createElement('canvas'); out.width=28; out.height=28; const octx=out.getContext('2d');
+  octx.imageSmoothingEnabled=true; octx.drawImage(sq,0,0,28,28);
+  const data=octx.getImageData(0,0,28,28).data;
+  const vec=new Array(28*28);
+  for(let i=0;i<28*28;i++){const r=data[i*4],g=data[i*4+1],b=data[i*4+2]; const lum=0.299*r+0.587*g+0.114*b; vec[i]=1-(lum/255); vec[i]=vec[i]>0.25?vec[i]:0;}
+  return vec;
+}
+
+// INIT
+buildTemplates(); nextSpelling();
+</script>
+
+</body>
+</html>

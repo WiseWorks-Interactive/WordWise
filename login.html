@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Log In</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Fredoka, sans-serif;
+      background: 
+        linear-gradient(to right, transparent 20px, #fff59d 24px, transparent 24px),
+        repeating-linear-gradient(to bottom, #fff 0px, #fff 23px, #cce3ff 24px);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal {
+      background: #fff59d;
+      width: 340px;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      overflow: hidden;
+      text-align: center;
+      animation: pop 0.3s ease-out;
+    }
+
+    .modal-header {
+      background: #2dc4ff;
+      color: white;
+      padding: 15px;
+      font-size: 20px;
+      font-weight: bold;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    .modal-header span {
+      flex-grow: 1;
+      text-align: center;
+    }
+
+    .modal-header button {
+      position: absolute;
+      right: 12px;
+      background: transparent;
+      border: none;
+      font-size: 16px;
+      font-weight: bold;
+      color: white;
+      cursor: pointer;
+      width: 26px;
+      height: 26px;
+      line-height: 22px;
+      text-align: center;
+      border-radius: 50%;
+    }
+
+    .modal-header button:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    input {
+      width: 90%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 20px;
+      border: none;
+      outline: none;
+      background: #2dc4ff;
+      color: white;
+      font-size: 14px;
+    }
+
+    input::placeholder {
+      color: #fff;
+    }
+
+    button {
+      width: 95%;
+      padding: 12px;
+      margin-top: 5px;
+      border: none;
+      border-radius: 20px;
+      background: #2dc4ff;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #357ABD;
+    }
+
+    .modal-footer {
+      margin: 10px 0;
+      font-size: 14px;
+    }
+
+    .modal-footer a {
+      color: #4A90E2;
+      text-decoration: none;
+    }
+
+    .modal-footer a:hover {
+      text-decoration: underline;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="modal">
+    <div class="modal-header">
+      <span>Log In</span>
+      <button onclick="window.location.href='index.html'">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="loginForm">
+        <input type="text" id="username" placeholder="Username" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <button type="submit">Log In</button>
+      </form>
+    </div>
+    <div class="modal-footer">
+      Don’t have an account? <a href="signup.html">Sign Up</a>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("loginForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+
+      const user = localStorage.getItem("user_" + username);
+      if (!user) {
+        alert("User not found!");
+        return;
+      }
+
+      const data = JSON.parse(user);
+      if (data.password !== password) {
+        alert("Incorrect password!");
+        return;
+      }
+
+      // Save session
+      localStorage.setItem("loggedInUser", username);
+      alert("Welcome back, " + username + "!");
+      window.location.href = "index.html";
+    });
+  </script>
+</body>
+</html>

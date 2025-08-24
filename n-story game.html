@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>WordWise - Story Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blue:#2dc4ff;
+  --yellow:#fff59d;
+  --ink:#00aaff;
+  --dash:#2dc4ff;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  font-family:'Fredoka',sans-serif;
+  background: repeating-linear-gradient(#fff,#fff 23px,var(--ink) 24px);
+  overflow-x:hidden;
+}
+body::before{
+  content:"";
+  position:fixed;
+  top:0;left:60px;width:2px;height:100%;
+  background:#ffe873;
+  z-index:0;
+}
+header{
+  background:var(--blue);
+  color:#fff;
+  padding:15px 20px;
+  position:fixed;left:0;right:0;top:0;
+  z-index:2000;
+  display:flex;align-items:center;justify-content:center;
+}
+header h2{margin:0;font-weight:700;font-size:2rem;}
+.section{
+  min-height:100vh;
+  padding:6rem 1rem 2rem;
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+}
+.game-title{
+  color:var(--blue);
+  font-size:clamp(1.6rem,4.5vw,2.4rem);
+  text-shadow:2px 3px #c9c9c9;margin:0 0 .6rem;
+}
+.game-panel{
+  background:#fff;border:3px dashed var(--dash);border-radius:22px;
+  width:min(1000px,92vw);padding:1rem 1rem 1.2rem;margin:10px auto;box-shadow:4px 6px #c9c9c9;
+  text-align:left;position:relative;
+}
+.subtle{color:#154f66;}
+.story-text{font-size:1.2rem;line-height:1.7;color:#154f66;margin-bottom:1rem;}
+.drop{display:inline-block;min-width:80px;border-bottom:3px dashed var(--dash);padding:0 .4rem;margin:0 .2rem;border-radius:6px;text-align:center;background:#f9f9f9;}
+.bank{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.8rem;justify-content:center;}
+.token{user-select:none;cursor:grab;background:#f1fbff;border:2px dashed var(--dash);border-radius:16px;padding:.35rem .6rem;font-weight:700;display:inline-block;}
+.token:hover{filter:brightness(0.97);}
+.btn-container{display:flex;gap:1rem;flex-wrap:wrap;margin-top:.5rem;justify-content:center;}
+button{background:var(--yellow);border:none;border-radius:30px;padding:12px 26px;font-weight:700;font-size:1.1rem;color:var(--blue);cursor:pointer;}
+button:hover{filter:brightness(1.05);}
+.score-display{
+  font-size:1.2rem; margin-bottom:0.8rem; color:var(--blue); position:relative;
+}
+@keyframes bounce {
+  0% {transform: translate(-50%, -1.2rem) scale(1);}
+  30% {transform: translate(-50%, -2.5rem) scale(1.4);}
+  60% {transform: translate(-50%, -2rem) scale(1.2);}
+  100% {transform: translate(-50%, -1.2rem) scale(1);}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h2>WORDWISE – Story Game</h2>
+</header>
+
+<section id="story-game" class="section">
+  <h2 class="game-title">Story Game</h2>
+
+  <!-- Back to Normal Mode button -->
+  <div style="width:100%; text-align:center; margin:0.5rem 0 1rem;">
+    <a href="normal.html">
+      <button style="padding:8px 14px; font-size:1rem;">← Back to Normal Mode</button>
+    </a>
+  </div>
+
+  <div class="score-display">
+    Score: <span id="score">0</span> pts
+    <div id="scoreAnim" style="position:absolute; left:50%; top:-1.2rem; font-weight:bold; color:#2dc4ff; opacity:0;">+10</div>
+  </div>
+
+  <div class="game-panel">
+    <p class="subtle">Drag the correct words onto the blanks to complete the story.</p>
+    <div id="storyText" class="story-text"></div>
+
+    <div class="bank" id="wordBank"></div>
+
+    <div class="btn-container">
+      <button onclick="checkStory()">Check Answer</button>
+      <button onclick="newStory()">New Story</button>
+    </div>
+  </div>
+</section>
+
+
+<script>
+  // ===== USER SCORE =====
+  let user = localStorage.getItem("loggedInUser");
+  if (!user) {
+    alert("Please login first!");
+    window.location.href = "login.html";
+  }
+  
+  let score = parseInt(localStorage.getItem(`score_${user}_story`) || "0", 10);
+  document.getElementById('score').textContent = score;
+  
+  function updateScore(points) {
+  if (points > 0) launchConfetti(); // confetti for points earned
+
+  // Multiply correct answers by 5 instead of 10
+  const pointsToAdd = points * 2;
+  score += pointsToAdd;
+
+  document.getElementById('score').textContent = score;
+
+  // Save to story, normal, and index shared key
+  localStorage.setItem(`score_${user}_story`, score);
+  localStorage.setItem(`score_${user}_normal`, score);
+  localStorage.setItem(`score_${user}_index`, score);
+
+  // No +10 animation
+  // showScoreAnimation();
+}
+
+// Update the call in checkStory:
+function checkStory(){
+  const drops=[...document.querySelectorAll('#storyText .drop')];
+  let correct=0;
+  drops.forEach(d=>{
+    const want=d.getAttribute('data-accept');
+    const got=(d.textContent||'').trim();
+    if(got.toLowerCase()===want.toLowerCase()){
+      d.style.borderBottomColor = '#4caf50';
+      correct++;
+    } else{
+      d.style.borderBottomColor = '#f44336';
+    }
+  });
+
+  // Add points per correct answer
+  updateScore(correct);
+
+  setTimeout(()=>{ newStory(); }, 1200);
+}
+
+
+  
+  // ===== CONFETTI =====
+  function launchConfetti() {
+    const duration = 1.5 * 1000;
+    const end = Date.now() + duration;
+    (function frame() {
+      const colors = ['#ff0', '#0ff', '#f0f', '#f90', '#0f0', '#00f'];
+      const conf = document.createElement('div');
+      conf.style.position = 'fixed';
+      conf.style.zIndex = '9999';
+      conf.style.width = '8px';
+      conf.style.height = '8px';
+      conf.style.background = colors[Math.floor(Math.random() * colors.length)];
+      conf.style.left = (Math.random() * window.innerWidth) + 'px';
+      conf.style.top = '0px';
+      conf.style.borderRadius = '50%';
+      document.body.appendChild(conf);
+      const fall = setInterval(() => {
+        let top = parseFloat(conf.style.top);
+        if (top < window.innerHeight) {
+          conf.style.top = (top + Math.random() * 8 + 2) + 'px';
+        } else {
+          conf.remove();
+          clearInterval(fall);
+        }
+      }, 16);
+      if (Date.now() < end) requestAnimationFrame(frame);
+    })();
+  }
+  
+  // ===== STORY GAME =====
+  const STORIES = [
+    { text: "It was a ____ morning, and Lina packed her ____ before leaving for the ____.", answers: ["sunny", "lunch", "library"], choices: ["sunny", "rain", "lunch", "pillow", "library", "kitchen"] },
+    { text: "The puppy chased the ____ ball across the ____ and jumped over the ____.", answers: ["red", "garden", "bench"], choices: ["red", "blue", "garden", "kitchen", "bench", "river"] },
+    { text: "Tom read a ____ book about ____ animals during the long ____ ride.", answers: ["funny", "wild", "train"], choices: ["funny", "train", "wild", "bus", "boring", "apple"] }
+  ];
+  
+  let currentStory = null;
+  
+  function newStory() {
+    currentStory = STORIES[Math.floor(Math.random() * STORIES.length)];
+    const parts = currentStory.text.split('____');
+    const container = document.getElementById('storyText');
+    container.innerHTML = '';
+    for (let i = 0; i < parts.length; i++) {
+      container.append(document.createTextNode(parts[i]));
+      if (i < parts.length - 1) {
+        const span = document.createElement('span');
+        span.className = 'drop';
+        span.setAttribute('data-accept', currentStory.answers[i]);
+        span.ondragover = (e) => e.preventDefault();
+        span.ondrop = (e) => onDrop(e, span);
+        container.append(span);
+      }
+    }
+    
+    const bank = document.getElementById('wordBank');
+    bank.innerHTML = '';
+    const shuffled = [...currentStory.choices].sort(() => Math.random() - 0.5);
+    shuffled.forEach(w => {
+      const t = document.createElement('span');
+      t.className = 'token';
+      t.textContent = w;
+      t.draggable = true;
+      t.ondragstart = (e) => e.dataTransfer.setData('text/plain', w);
+      bank.appendChild(t);
+    });
+  }
+  
+  function onDrop(e, dropEl) {
+    const word = e.dataTransfer.getData('text/plain');
+    if (dropEl.textContent.trim()) {
+      const back = document.createElement('span');
+      back.className = 'token';
+      back.textContent = dropEl.textContent.trim();
+      back.draggable = true;
+      back.ondragstart = (ev) => ev.dataTransfer.setData('text/plain', back.textContent);
+      document.getElementById('wordBank').appendChild(back);
+    }
+    dropEl.textContent = word;
+  }
+  
+  function checkStory(){
+  const drops=[...document.querySelectorAll('#storyText .drop')];
+  let correct=0;
+  drops.forEach(d=>{
+    const want=d.getAttribute('data-accept');
+    const got=(d.textContent||'').trim();
+    if(got.toLowerCase()===want.toLowerCase()){
+      d.style.borderBottomColor = '#4caf50'; // green if correct
+      correct++;
+    } else{
+      d.style.borderBottomColor = '#f44336'; // red if wrong
+    }
+  });
+
+  // Update score for correct words
+  updateScore(correct*10);
+
+  // After a short delay, move to next story
+  setTimeout(()=>{
+    newStory();
+  }, 1200); // 1.2 seconds delay to see results
+}
+  
+  window.addEventListener('load', () => { newStory(); });
+</script>
+</body>
+</html>

@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>WORDWISE - Learn & Save Words</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue:#2dc4ff;
+    --yellow:#fff59d;
+    --ink:#00aaff;
+    --dash:#2dc4ff;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:'Fredoka',sans-serif;
+    background: repeating-linear-gradient(#fff,#fff 23px,var(--ink) 24px);
+    overflow-x:hidden;
+  }
+  body::before{
+    content:"";
+    position:fixed;
+    top:0;left:60px;width:2px;height:100%;
+    background:#ffe873;
+    z-index:0;
+  }
+  header{
+    background:var(--blue);
+    color:#fff;
+    padding:21px 20px;
+    position:fixed;left:0;right:0;top:0;
+    z-index:2000;
+    display:flex;align-items:center;justify-content:space-between;
+    font-family:'Fredoka', sans-serif;
+  }
+  header h2{margin:0;font-weight:700}
+  nav a{color:#fff;text-decoration:none;font-weight:700;cursor:pointer;margin-left:15px;font-family:'Fredoka',sans-serif;}
+  nav a:hover{text-decoration:underline}
+  .doodle{position:fixed;z-index:1500;pointer-events:none}
+  .doodle-top-left{top:80px;left:6%;width:clamp(80px,10vw,140px)}
+  .doodle-top-right{top:80px;right:6%;width:clamp(80px,12vw,160px)}
+  .doodle-bottom-left{bottom:7%;left:7%;width:clamp(70px,10vw,140px)}
+  .section{min-height:100vh;padding:6rem 1rem 2rem;display:flex;flex-direction:column;align-items:center;text-align:center;}
+  #landing{min-height:calc(100vh - 0px);display:flex;flex-direction:column;justify-content:center;align-items:center;}
+  h1{font-size:clamp(3rem,8vw,6rem);color:var(--blue);text-shadow:4px 6px #c9c9c9;margin:0 0 18px;font-family:'Fredoka',sans-serif;}
+  .btn-container{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center}
+  button{background:var(--yellow);border:none;border-radius:30px;padding:12px 26px;font-weight:700;font-size:1.1rem;color:var(--blue);cursor:pointer;font-family:'Fredoka',sans-serif;}
+  button:disabled{background:#ddd;color:#fff;cursor:not-allowed}
+  button:hover:not(:disabled){filter:brightness(1.05)}
+  .dash-title{font-size:clamp(2rem,4.5vw,3rem);color:var(--blue);text-shadow:2px 3px #c9c9c9;margin:0 0 10px;font-family:'Fredoka',sans-serif;}
+  .dash-panel{background:#fff;border:3px dashed var(--dash);border-radius:22px;width:min(900px,88vw);padding:1.5rem clamp(1rem,3vw,2rem);margin:14px auto 28px;box-shadow:4px 6px #c9c9c9;text-align:left;}
+  .wotd-head{font-size:clamp(1.8rem,4vw,2.5rem);color:var(--blue);font-weight:700;margin:10px 0 6px;font-family:'Fredoka',sans-serif;}
+  .saved-item{display:flex;gap:.6rem;align-items:center;justify-content:space-between;background:#f7fbff;border:2px dashed var(--dash);border-radius:16px;padding:.6rem .9rem;margin:.4rem 0;}
+  .delete-btn{background:#ff6b6b;color:#fff;border-radius:12px;padding:.35rem .7rem;font-size:.85rem}
+  .delete-btn:hover{filter:brightness(.95)}
+  .modes-container{display:flex;gap:1.2rem;flex-wrap:wrap;justify-content:center;margin-top:1rem;}
+  .mode-card{background:#fff;border:3px dashed var(--dash);border-radius:22px;box-shadow:4px 6px #c9c9c9;max-width:320px;text-align:center;padding:1.2rem 1rem;}
+  .subtle{color:#116fa0}
+  #search-bar{width:100%;padding:12px;border:2px solid var(--blue);border-radius:25px;font-size:1rem;font-family:'Fredoka',sans-serif;margin-bottom:1rem}
+  #search-results{margin-top:1rem;}
+  .search-item{background:#f7fbff;border:2px dashed var(--dash);border-radius:16px;padding:.6rem .9rem;margin:.4rem 0;}
+  .progress-bar-container{
+    width:100%; background:#f1f1f1; border-radius:20px; height:18px; margin-top:.6rem;
+  }
+  .progress-bar{
+    height:100%; border-radius:20px; background:var(--blue); width:0%;
+    transition: width .5s ease;
+  }
+</style>
+</head>
+<body>
+
+<header class="main-header">
+  <div class="header-left">
+    <h2 style="cursor:pointer;" onclick="window.location.href='index.html'">WORDWISE</h2>
+  </div>
+  <div class="header-right" id="authLinks"></div>
+</header>
+
+<script>
+// ===== AUTH & HEADER =====
+function updateHeader() {
+  const authLinks = document.getElementById("authLinks");
+  const loggedInUser = localStorage.getItem("loggedInUser");
+
+  if (loggedInUser) {
+    authLinks.innerHTML = `
+      <span style="font-family:'Fredoka',sans-serif;font-weight:600;">Welcome, ${loggedInUser}</span>
+      <button style="font-family:'Fredoka',sans-serif;margin-left:10px;padding:6px 17px;border-radius:29px;border:none;background:#fff59d;color:#2dc4ff;cursor:pointer;" onclick="logout()">Logout</button>
+    `;
+  } else {
+    authLinks.innerHTML = `
+      <a href="login.html">Log In</a>
+      <a href="signup.html" style="margin-left:15px;">Sign Up</a>
+    `;
+  }
+}
+
+function logout() {
+  localStorage.removeItem("loggedInUser");
+  location.reload();
+}
+
+// Run on page load
+document.addEventListener("DOMContentLoaded", updateHeader);
+</script>
+
+
+<section id="landing" class="section">
+  <h1>WORDWISE!</h1>
+  <div class="doodles">
+    <img src="https://i.ibb.co/cKpzC95x/doodle-side.png" class="doodle doodle-top-left" alt="">
+    <img src="https://i.ibb.co/Dfy32YQc/doodle-bob.png" class="doodle doodle-top-right" alt="">
+    <img src="https://i.ibb.co/zVfVtnT7/doodle-xo.png" class="doodle doodle-bottom-left" alt="">
+  </div>
+  <div class="btn-container">
+    <a href="signup.html"><button>Sign Up</button></a>
+    <button onclick="document.getElementById('learn').scrollIntoView({behavior:'smooth'})">Start Learning</button>
+    <a href="login.html"><button>Log In</button></a>
+  </div>
+</section>
+
+<section id="learn" class="section">
+  <h2 class="dash-title">Welcome to WORDWISE</h2>
+  <div class="dash-panel">
+    <p>Play, learn, and save words! Earn points and become Word Explorer, Word Master, or Word Wizard!</p>
+  </div>
+
+  <!-- SCOREBOARD -->
+  <div class="dash-panel" id="scoreboard" style="text-align:center;">
+    <h3>🌟 Your Progress</h3>
+    <p>Score: <strong id="homeScore">0</strong></p>
+    <div style="background:#e0e0e0;border-radius:20px;width:90%;height:20px;margin:0.5rem auto;">
+      <div id="progress-bar" style="height:100%;background:#2dc4ff;border-radius:20px;width:0%;"></div>
+    </div>
+    <div id="achievements" style="margin-top:.6rem; display:flex; gap:.6rem; justify-content:center; flex-wrap:wrap;"></div>
+  </div>
+
+  <div class="dash-panel">
+    <p style="font-weight:600;color:#117fb3">🔎 Search words or descriptions below:</p>
+    <input id="search-bar" type="text" placeholder="Type a word or meaning..."/>
+    <div id="search-results"></div>
+  </div>
+
+  <div class="wotd-head">WORD OF THE DAY! 📖</div>
+  <div class="dash-panel" id="wotd-box">
+    <p id="wotd-word" style="font-size:1.5rem;color:#117fb3;font-weight:700;margin-bottom:.2rem;">Loading…</p>
+    <p id="wotd-def">—</p>
+    <p id="wotd-ex" style="font-style:italic;color:#395b6a">—</p>
+    <div class="btn-container" style="margin-top:.6rem">
+      <button onclick="fetchWord()">Random Word</button>
+      <button onclick="saveCurrent()">Save Word</button>
+    </div>
+  </div>
+
+  <div class="dash-panel" id="saved-wrapper">
+    <h3 style="margin:0 0 .6rem;color:#1277a8">Saved Words</h3>
+    <div id="saved-list"></div>
+  </div>
+</section>
+
+<section id="modes" class="section">
+  <h2 class="dash-title">Choose Your Mode</h2>
+  <div class="modes-container">
+    <div class="mode-card">
+      <p class="subtle"><strong>Normal Mode</strong></p>
+      <p class="subtle">Practice at your own pace.</p>
+      <button id="normalBtn" onclick="startNormal()">Enter Normal Mode</button>
+      <p id="normalLock" style="color:#b33;font-size:.9rem;display:none;">🔒 Log in to unlock</p>
+    </div>
+    <div class="mode-card">
+      <p class="subtle"><strong>Timed Mode</strong></p>
+      <p class="subtle">Race the clock!</p>
+      <button id="timedBtn" onclick="startTimed()">Enter Timed Mode</button>
+      <p id="timedLock" style="color:#b33;font-size:.9rem;display:none;">🔒 Log in to unlock</p>
+    </div>
+  </div>
+</section>
+
+
+<script>
+// ===== AUTH HEADER =====
+function updateHeader() {
+  const authLinks = document.getElementById("authLinks");
+  const loggedInUser = localStorage.getItem("loggedInUser");
+
+  if (loggedInUser) {
+    authLinks.innerHTML = `
+      <span style="font-weight:600;">Welcome, ${loggedInUser}</span>
+      <button onclick="logout()">Logout</button>
+    `;
+  } else {
+    authLinks.innerHTML = `
+      <a href="login.html">Log In</a>
+      <a href="signup.html" style="margin-left:15px;">Sign Up</a>
+    `;
+  }
+}
+function logout(){
+  localStorage.removeItem("loggedInUser");
+  window.location.href="index.html";
+}
+document.addEventListener("DOMContentLoaded", updateHeader);
+
+// ===== AUTH SCORE & MODES =====
+function getCurrentUser() {
+  return localStorage.getItem("loggedInUser");
+}
+
+// 🔹 NEW: Combined score function
+function getUserScore() {
+  const u = getCurrentUser();
+  if (!u) return 0;
+
+  const normal = parseInt(localStorage.getItem(`score_${u}_normal`) || "0", 10);
+  const rapid = parseInt(localStorage.getItem(`score_${u}_rapid`) || "0", 10);
+  const sentence = parseInt(localStorage.getItem(`score_${u}_sentence`) || "0", 10);
+
+  return normal + rapid + sentence;
+}
+
+// ===== DISPLAY SCOREBOARD =====
+function updateScoreboard() {
+  const user = localStorage.getItem("loggedInUser");
+  if (user) {
+    let mainScore = localStorage.getItem(`score_${user}`) || "0";
+    document.getElementById("scoreDisplay").textContent = mainScore;
+  }
+}
+
+document.addEventListener("DOMContentLoaded", updateScoreboard);
+
+function renderScoreboard() {
+  const user = getCurrentUser();
+  const scoreDisplay = document.getElementById("homeScore");
+  const progressBar = document.getElementById("progress-bar");
+
+  if (!user) {
+    scoreDisplay.textContent = "0";
+    progressBar.style.width = "0%";
+    return;
+  }
+
+  // 🔹 Combine all game scores
+  const normal = parseInt(localStorage.getItem(`score_${user}_normal`) || "0", 10);
+  const rapid = parseInt(localStorage.getItem(`score_${user}_rapid`) || "0", 10);
+  const sentence = parseInt(localStorage.getItem(`score_${user}_sentence`) || "0", 10);
+
+  const totalScore = normal + rapid + sentence;
+
+  // Update scoreboard
+scoreDisplay.textContent = totalScore;
+
+// Corrected progress bar scaling
+const cappedScore = Math.min(250, totalScore);
+const progressPercent = (cappedScore / 250) * 100;
+progressBar.style.width = `${progressPercent}%`;
+
+
+  // Optional: Achievements badges
+  const achievementsDiv = document.getElementById("achievements");
+  achievementsDiv.innerHTML = "";
+  if(totalScore >= 50) achievementsDiv.innerHTML += "<span>🌟 Word Explorer</span>";
+  if(totalScore >= 100) achievementsDiv.innerHTML += "<span>🏅 Word Master</span>";
+  if(totalScore >= 250) achievementsDiv.innerHTML += "<span>🧙 Word Wizard</span>";
+}
+document.addEventListener("DOMContentLoaded", renderScoreboard);
+
+// WORD STORAGE
+function getSaved(){const u=getCurrentUser();return u?JSON.parse(localStorage.getItem(`savedWords_${u}`)||"[]"):[];}
+function setSaved(list){const u=getCurrentUser();if(!u)return;localStorage.setItem(`savedWords_${u}`,JSON.stringify(list));}
+function saveWord(word,def="",syn=[],ex=""){if(!word) return; const l=getSaved(); if(l.some(w=>w.word.toLowerCase()===word.toLowerCase())){alert(`"${word}" already saved.`); return;} l.push({word,definition:def,synonyms:syn,example:ex}); setSaved(l); renderSaved(); alert(`Saved "${word}".`);}
+function removeSaved(i){const l=getSaved();l.splice(i,1);setSaved(l);renderSaved();}
+function renderSaved(){const wrap=document.getElementById("saved-list");const l=getSaved();wrap.innerHTML=l.length?"":"<p>No saved words yet.</p>"; l.forEach((item,idx)=>{const div=document.createElement("div");div.style.cssText="text-align:left;border:2px dotted #0e7aa9;border-radius:10px;padding:10px;margin:8px 0;background:#f9fcfe;"; div.innerHTML=`<div style="font-weight:700;color:#0e7aa9">${item.word}</div><div style="font-size:.95rem;color:#154f66">${item.definition}</div><div style="font-size:.9rem;font-style:italic;color:#395b6a">${item.example?`Example: ${item.example}`:""}</div><button class="circle-btn" onclick="removeSaved(${idx})">Delete</button>`; wrap.appendChild(div);});}
+
+// WORD OF THE DAY
+let current=null;
+async function fetchWord(retry=0){
+  try{
+    document.getElementById('wotd-word').textContent='Loading…';
+    document.getElementById('wotd-def').textContent='—';
+    document.getElementById('wotd-ex').textContent='—';
+    const r=await fetch('https://random-word-api.herokuapp.com/word'); 
+    const [rw]=await r.json();
+    const d=await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${rw}`);
+    const j=await d.json();
+    if(!Array.isArray(j)||!j[0]||!j[0].meanings?.length){
+      if(retry<4) return fetchWord(retry+1);
+      document.getElementById('wotd-word').textContent='(No word found)';
+      return;
+    }
+    const entry=j[0]; 
+    const def=entry.meanings[0]?.definitions[0]?.definition||'No definition';
+    const ex=entry.meanings[0]?.definitions[0]?.example||'No example';
+    current={word:entry.word,definition:def,example:ex};
+    document.getElementById('wotd-word').textContent=entry.word;
+    document.getElementById('wotd-def').textContent=def;
+    document.getElementById('wotd-ex').textContent=`Example: ${ex}`;
+  }catch(err){
+    if(retry<4) return fetchWord(retry+1);
+    document.getElementById('wotd-word').textContent='Error loading word.';
+  }
+}
+function saveCurrent(){if(!current)return;saveWord(current.word,current.definition,[],current.example);}
+fetchWord(); renderSaved();
+
+// SEARCH
+const builtInDictionary=[
+  { word:"happy",definition:"Feeling or showing pleasure.",synonyms:["joyful","cheerful","content"]},
+  { word:"sad",definition:"Feeling or showing sorrow.",synonyms:["unhappy","sorrowful","downcast"]},
+  { word:"fast",definition:"Moving quickly.",synonyms:["quick","rapid","swift"]},
+  { word:"bright",definition:"Giving out or reflecting much light.",synonyms:["radiant","shiny","luminous"]}
+];
+document.getElementById('search-bar').addEventListener('input',function(){
+  const q=this.value.toLowerCase().trim();
+  const res=document.getElementById('search-results'); 
+  res.innerHTML='';
+  if(!q) return;
+  const saved=getSaved();
+  const matches=[...saved,...builtInDictionary].filter(w=>w.word.toLowerCase().includes(q)||(w.definition||'').toLowerCase().includes(q));
+  matches.forEach(item=>{
+    const div=document.createElement('div'); 
+    div.className='search-item';
+    div.innerHTML=`<strong>${item.word}</strong>: ${item.definition} <button onclick='saveWord("${item.word}","${item.definition.replace(/"/g,'&quot;')}")'>Add</button>`;
+    res.appendChild(div);
+  });
+});
+
+// GAME MODES
+function startNormal(){if(!getCurrentUser()){alert("Please log in first."); return;} window.location.href='normal.html';}
+function startTimed(){if(!getCurrentUser()){alert("Please log in first."); return;} window.location.href='timed.html';}
+
+// ===== LOCK / UNLOCK MODES =====
+function updateModesLock(){
+  const user = getCurrentUser();
+  const normalBtn = document.getElementById("normalBtn");
+  const timedBtn = document.getElementById("timedBtn");
+  const normalLock = document.getElementById("normalLock");
+  const timedLock = document.getElementById("timedLock");
+
+  if(!user){
+    normalBtn.onclick = () => window.location.href="login.html";
+    timedBtn.onclick = () => window.location.href="login.html";
+    normalLock.style.display = "block";
+    timedLock.style.display = "block";
+  } else {
+    normalBtn.onclick = startNormal;
+    timedBtn.onclick = startTimed;
+    normalLock.style.display = "none";
+    timedLock.style.display = "none";
+  }
+}
+
+
+// Initial render
+document.addEventListener("DOMContentLoaded", () => { renderScoreboard(); });
+window.addEventListener("storage", e => { if(e.key && e.key.startsWith("score_")) renderScoreboard(); });
+</script>
+
+</body>
+</html>

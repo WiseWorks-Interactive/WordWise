@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>WordWise - Normal Mode</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --blue:#2dc4ff;
+  --yellow:#fff59d;
+  --ink:#00aaff;
+  --dash:#2dc4ff;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  font-family:'Fredoka',sans-serif;
+  background: repeating-linear-gradient(#fff,#fff 23px,var(--ink) 24px);
+  overflow-x:hidden;
+}
+body::before{
+  content:"";
+  position:fixed;
+  top:0;left:60px;width:2px;height:100%;
+  background:#ffe873;
+  z-index:0;
+}
+header{
+  background:var(--blue);
+  color:#fff;
+  padding:15px 20px;
+  position:fixed;left:0;right:0;top:0;
+  z-index:2000;
+  display:flex;align-items:center;justify-content:space-between;
+}
+header h2{margin:0;font-weight:700;cursor:pointer;}
+nav a{color:#fff;text-decoration:none;font-weight:700;cursor:pointer;margin-left:15px;}
+nav a:hover{text-decoration:underline;}
+
+.section{
+  min-height:100vh;
+  padding:6rem 1rem 2rem;
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+}
+h2.dash-title{font-size:clamp(2rem,4.5vw,3rem);color:var(--blue);text-shadow:2px 3px #c9c9c9;margin-bottom:10px;}
+
+.btn-container{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;}
+button{background:var(--yellow);border:none;border-radius:30px;padding:12px 26px;font-weight:700;font-size:1.1rem;color:var(--blue);cursor:pointer;}
+button:hover{filter:brightness(1.05);}
+
+.dash-panel{
+  background:#fff;
+  border:3px dashed var(--dash);
+  border-radius:22px;
+  width:min(900px,88vw);
+  padding:1.5rem clamp(1rem,3vw,2rem);
+  margin:14px auto 28px;
+  box-shadow:4px 6px #c9c9c9;
+  text-align:center;
+}
+.subtle{color:#154f66;}
+
+.game-select{display:flex;gap:1.2rem;flex-wrap:wrap;justify-content:center;margin-top:1rem;}
+.game-card{background:#fff;border:3px dashed var(--dash);border-radius:22px;box-shadow:4px 6px #c9c9c9;max-width:320px;text-align:center;padding:1.2rem 1rem;}
+</style>
+</head>
+<body>
+
+<header class="main-header">
+  <div class="header-left">
+    <h2>WORDWISE</h2>
+  </div>
+  <div class="header-right" id="authLinks"></div>
+</header>
+
+<!-- NORMAL MODE SELECTION -->
+<section id="normal-select" class="section">
+  <h2 class="dash-title">Normal Mode</h2>
+
+  <!-- SCOREBOARD -->
+  <div class="dash-panel" id="scoreboard">
+    <h3>🌟 Your Progress</h3>
+    <p>Score: <strong id="homeScore">0</strong></p>
+    <div style="background:#e0e0e0;border-radius:20px;width:90%;height:20px;margin:0.5rem auto; position:relative;">
+  <div id="progress-bar" style="height:100%;background:#2dc4ff;border-radius:20px;width:0%;"></div>
+  <span id="progress-text" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:0.9rem;font-weight:600;color:#fff;">0%</span>
+</div>
+    <div id="achievements" style="margin-top:.6rem; display:flex; gap:.6rem; justify-content:center; flex-wrap:wrap;"></div>
+  </div>
+
+  <!-- GAME SELECTION -->
+  <div class="game-select">
+    <div class="game-card">
+      <p class="subtle"><strong>Spelling Game</strong><br>Fill the missing letter. Draw it on the whiteboard!</p>
+      <button onclick="window.location.href='n-spelling game.html'">Start Spelling Game</button>
+    </div>
+    <div class="game-card">
+      <p class="subtle"><strong>Story Game</strong><br>Drag the correct words into the blanks.</p>
+      <button onclick="window.location.href='n-story game.html'">Start Story Game</button>
+    </div>
+  </div>
+</section>
+
+<!-- BACK TO HOMEPAGE BUTTON -->
+<div style="display:flex; justify-content:center; margin-top:-4rem;">
+  <button onclick="window.location.href='index.html'">← Back to Homepage</button>
+</div>
+
+<script>
+// ===== AUTH & HEADER =====
+function updateHeader() {
+  const authLinks = document.getElementById("authLinks");
+  const loggedInUser = localStorage.getItem("loggedInUser");
+
+  if (loggedInUser) {
+    authLinks.innerHTML = `
+      <span style="font-weight:600;">Welcome, ${loggedInUser}</span>
+      <button onclick="logout()" style="margin-left:10px;padding:6px 17px;border-radius:29px;border:none;background:#fff59d;color:#2dc4ff;cursor:pointer;">Logout</button>
+    `;
+  } else {
+    authLinks.innerHTML = `<a href="login.html">Log In</a> <a href="signup.html" style="margin-left:15px;">Sign Up</a>`;
+  }
+}
+
+function logout() {
+  localStorage.removeItem("loggedInUser");
+  location.reload();
+}
+
+document.addEventListener("DOMContentLoaded", updateHeader);
+
+// ===== CUMULATIVE SCOREBOARD =====
+function getCurrentUser() {
+  return localStorage.getItem("loggedInUser");
+}
+
+function getUserTotalScore() {
+  const u = getCurrentUser();
+  if (!u) return 0;
+  const normal = parseInt(localStorage.getItem(`score_${u}_normal`) || "0", 10);
+  const rapid = parseInt(localStorage.getItem(`score_${u}_rapid`) || "0", 10);
+  const sentence = parseInt(localStorage.getItem(`score_${u}_sentence`) || "0", 10);
+  return normal + rapid + sentence;
+}
+
+function renderScoreboard() {
+  const user = getCurrentUser();
+  const scoreDisplay = document.getElementById("homeScore");
+  const progressBar = document.getElementById("progress-bar");
+  const achievementsDiv = document.getElementById("achievements");
+
+  if (!user) {
+    if(scoreDisplay) scoreDisplay.textContent = "0";
+    if(progressBar) progressBar.style.width = "0%";
+    if(achievementsDiv) achievementsDiv.innerHTML = "";
+    return;
+  }
+
+  const totalScore = getUserTotalScore();   // ✅ this was missing
+  const progressText = document.getElementById("progress-text");
+
+  const cappedScore = Math.min(250, totalScore);
+  const progressPercent = (cappedScore / 250) * 100;
+
+  if(scoreDisplay) scoreDisplay.textContent = totalScore;
+  if(progressBar) progressBar.style.width = `${progressPercent}%`;
+  if(progressText) progressText.textContent = `${Math.round(progressPercent)}%`;
+
+  if(achievementsDiv) {
+    achievementsDiv.innerHTML = "";
+    if(totalScore >= 50) achievementsDiv.innerHTML += "<span>🌟 Word Explorer</span>";
+    if(totalScore >= 100) achievementsDiv.innerHTML += "<span>🏅 Word Master</span>";
+    if(totalScore >= 250) achievementsDiv.innerHTML += "<span>🧙 Word Wizard</span>";
+  }
+}
+
+// Auto render on load
+document.addEventListener("DOMContentLoaded", renderScoreboard);
+
+// Update if scores change in other tabs
+window.addEventListener("storage", e => {
+  if (e.key && e.key.startsWith("score_")) renderScoreboard();
+});
+</script>
+
+</body>
+</html>
